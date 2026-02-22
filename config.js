@@ -180,6 +180,105 @@ function removeUser(chatId) {
 }
 
 
+// ══════════════════════════════
+// AI CONFIG - Multi Provider
+// ══════════════════════════════
+
+function saveAiConfig(provider, apiKey, model) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const providerUpper = provider.toUpperCase();
+
+    // Simpan key & model per provider
+    props.setProperties({
+      [`AI_API_KEY_${providerUpper}`]: apiKey,
+      [`AI_MODEL_${providerUpper}`]: model || "",
+      AI_PROVIDER_ACTIVE: provider,
+    });
+
+    return { success: true, message: `${provider} saved & activated` };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
+
+function getAiConfig(provider) {
+  const props = PropertiesService.getScriptProperties();
+  const providerUpper = provider.toUpperCase();
+  return {
+    provider: provider,
+    apiKey: props.getProperty(`AI_API_KEY_${providerUpper}`) || "",
+    model: props.getProperty(`AI_MODEL_${providerUpper}`) || "",
+  };
+}
+
+function getAiStatus() {
+  const props = PropertiesService.getScriptProperties();
+  const activeProvider = props.getProperty("AI_PROVIDER_ACTIVE") || "";
+
+  if (!activeProvider) return { active: false, provider: "", model: "" };
+
+  const providerUpper = activeProvider.toUpperCase();
+  const apiKey = props.getProperty(`AI_API_KEY_${providerUpper}`) || "";
+
+  return {
+    active: !!apiKey,
+    provider: activeProvider,
+    model: props.getProperty(`AI_MODEL_${providerUpper}`) || "",
+    // Status semua provider
+    providers: {
+      gemini: !!props.getProperty("AI_API_KEY_GEMINI"),
+      openai: !!props.getProperty("AI_API_KEY_OPENAI"),
+      groq: !!props.getProperty("AI_API_KEY_GROQ"),
+    }
+  };
+}
+
+function getActiveAiConfig() {
+  const props = PropertiesService.getScriptProperties();
+  const activeProvider = props.getProperty("AI_PROVIDER_ACTIVE") || "";
+  if (!activeProvider) return null;
+
+  const providerUpper = activeProvider.toUpperCase();
+  const apiKey = props.getProperty(`AI_API_KEY_${providerUpper}`);
+  if (!apiKey) return null;
+
+  return {
+    provider: activeProvider,
+    apiKey: apiKey,
+    model: props.getProperty(`AI_MODEL_${providerUpper}`) || "",
+  };
+}
+
+function deleteAiConfig(provider) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const providerUpper = provider.toUpperCase();
+    props.deleteProperty(`AI_API_KEY_${providerUpper}`);
+    props.deleteProperty(`AI_MODEL_${providerUpper}`);
+
+    // Reset active kalau yang dihapus adalah active
+    if (props.getProperty("AI_PROVIDER_ACTIVE") === provider) {
+      props.deleteProperty("AI_PROVIDER_ACTIVE");
+    }
+
+    return { success: true, message: `${provider} config deleted` };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
+
+function setDefaultProvider(provider) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    props.setProperty('AI_PROVIDER_ACTIVE', provider);
+    return { success: true };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
+
+
 // ═══════════════════════════════════════════════
 //  OPEN SIDEBAR
 // ═══════════════════════════════════════════════
