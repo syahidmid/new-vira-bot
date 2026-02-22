@@ -4,24 +4,7 @@
 //  supaya ikut ter-copy saat spreadsheet di-duplicate
 // ═══════════════════════════════════════════════
 
-var CONFIG_SHEET_NAME = '_config';
 
-/**
- * Ambil atau buat sheet _config (hidden)
- */
-function getConfigSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(CONFIG_SHEET_NAME);
-  if (!sheet) {
-    sheet = ss.insertSheet(CONFIG_SHEET_NAME);
-    sheet.hideSheet();
-    // Header
-    sheet.getRange(1, 1, 1, 2).setValues([['key', 'value']]);
-    sheet.setColumnWidth(1, 200);
-    sheet.setColumnWidth(2, 500);
-  }
-  return sheet;
-}
 
 /**
  * Simpan nilai berdasarkan key
@@ -150,13 +133,12 @@ function deleteWebhook() {
 
 /** Ambil semua user */
 function getUsers() {
-  var raw = getFromSheet('ALLOWED_USERS');
+  var raw = PropertiesService.getScriptProperties().getProperty('ALLOWED_USERS');
   try { return raw ? JSON.parse(raw) : []; } catch (e) { return []; }
 }
 
-/** Simpan semua user (replace) */
 function saveUsers(usersArray) {
-  saveToSheet('ALLOWED_USERS', JSON.stringify(usersArray));
+  PropertiesService.getScriptProperties().setProperty('ALLOWED_USERS', JSON.stringify(usersArray));
 }
 
 /** Tambah satu user baru */
