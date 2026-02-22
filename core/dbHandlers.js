@@ -491,7 +491,8 @@ function findcatTransactionFromDbOnly(transactionName) {
     return { category: "Uncategorized", tag: "", matched: false };
   }
 
-  const exactMatch = dbcatandTag.search(transactionName);
+  const dbCatAndTag = getDbCatAndTag(); // 👈 assign sekali
+  const exactMatch = dbCatAndTag.search(transactionName);
   let category = "Uncategorized";
   let tag = "";
   let matched = false;
@@ -503,7 +504,7 @@ function findcatTransactionFromDbOnly(transactionName) {
   } else {
     const searchWords = transactionName.split(/\s+/);
     const searchRegex = new RegExp(searchWords.join("|"), "i");
-    const cat = dbcatandTag.search(searchRegex);
+    const cat = dbCatAndTag.search(searchRegex); // 👈 pakai variabel lokal
 
     if (cat) {
       category = cat.data[1];

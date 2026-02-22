@@ -26,7 +26,7 @@ function debugMode() {
                 type: "private",
             },
             date: 1668514366,
-            text: "#Spending Test 2000",
+            text: "#Spending Sampoerna Mild 2000",
             entities: [{ offset: 0, length: 6, type: "bot_command" }],
         },
     };

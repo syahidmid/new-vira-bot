@@ -85,7 +85,7 @@ function setupMessageRouters(bot) {
     // ===== SLASH COMMANDS (No AI needed) =====
 
     // /start command
-    bot.start(handleStartCommand);
+    bot.start(handleStartCommand); // Done refactor - moved logic to separate function in the same file
 
     // Emergency exit command
     bot.command('exit', (ctx) => {
@@ -120,10 +120,10 @@ function setupMessageRouters(bot) {
     // ===== HASHTAG SHORTCUTS (Direct execution, no AI) =====
 
     // #Spending: Log expense with shortcut format
-    bot.hears(/#Spending (.+) (\d+)/, handleHashtagSpending);
+    bot.hears(/#Spending (.+) (\d+)/, handleHashtagSpending); // done refactor - moved logic to separate function in the same file
 
     // #Income: Log income with shortcut format
-    bot.hears(/#Income (.+) (\d+)/, handleHashtagIncome);
+    bot.hears(/#Income (.+) (\d+)/, handleHashtagIncome); // done refactor - moved logic to separate function in the same file
 
     // #Delete: Delete transaction by ID
     bot.hears(/#Delete ([0-9A-Za-z]{4})/, handleHashtagDelete);
@@ -258,7 +258,7 @@ function handleHashtagSpending(ctx) {
     saveRecord.setValues([recordValues]);
     Logger.log(`[handleHashtagSpending] Transaksi berhasil disimpan — row: ${newRow}, category: "${category}", tag: "${tag}"`);
 
-    const pesan = printspendingTransaction(transactionID);
+    const pesan = printTransaction(transactionID);
 
     ctx.replyWithMarkdown(`🤖 Alright ${firstName}, I have recorded your expense in the Spreadsheets.\n\n${pesan}`, {
         reply_markup: {
@@ -272,6 +272,7 @@ function handleHashtagSpending(ctx) {
  * Handle #Income INCOME_NAME AMOUNT
  * Direct execution - no AI needed
  */
+
 function handleHashtagIncome(ctx) {
     const chatID = ctx.from.id;
 
@@ -296,22 +297,24 @@ function handleHashtagIncome(ctx) {
     const { category, tag } = findcatTransaction(incomeName);
     const note = "";
 
-    const dbIncome = getDbIncome(); // 👈 assign sekali di sini
+    const dbTransactions = getDbTransactions(); // 👈 assign sekali di sini
 
-    const newRow = dbIncome.last_row + 1;
-    const saveRecord = dbIncome.range(newRow, 2, 1, 7);
+    const newRow = dbTransactions.last_row + 1;
+    const saveRecord = dbTransactions.range(newRow, 1, 1, 9);
     const recordValues = [
         transactionID,
         savedDate,
         incomeName,
+        "income",
         category,
         amount,
         tag,
+        "",
         note,
     ];
 
     saveRecord.setValues([recordValues]);
-    const pesan = printincomeTransaction(transactionID);
+    const pesan = printTransaction(transactionID);
 
     ctx.replyWithMarkdown(`🤖 Alright ${firstName}, I have recorded your income in the Spreadsheets.\n\n${pesan}`, {
         reply_markup: {
@@ -496,3 +499,4 @@ function handleNaturalLanguage(ctx) {
         ctx.reply("🤖 An error occurred while processing your request. Please try again.");
     }
 }
+

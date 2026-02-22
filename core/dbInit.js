@@ -1,21 +1,32 @@
 
 // Inisialisasi database menggunakan miniSheetDB2
 
-const SPREADSHEET_ID = "1693q7FHrn-V4ZQQZDGgtHmU9rjr5mpc46CQPiYV55MM";
+const VIRA_SPREADSHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
 
 function getDbTransactions() {
-  return new miniSheetDB2.init(SPREADSHEET_ID, "Transactions", {
-    col_length: 9, // +1 kolom account
+  return new miniSheetDB2.init(VIRA_SPREADSHEET_ID, "Transactions", {
+    col_length: 9,
     row_start: 2,
     col_start: 1,
     json: true,
   });
 }
 
+function getDbCatAndTag() {
+  return new miniSheetDB2.init(VIRA_SPREADSHEET_ID, "Query", { // 👈 bukan getDbTransactions()
+    col_length: 8,
+    row_start: 2,
+    json: true,
+  });
+}
+
+/*
+----------------------------------------------------------------------------
+Legacy code, will be refactored later
+----------------------------------------------------------------------------  
+*/
 
 
-
-// Legacy code, will be refactored later
 function getSSID() {
   return "1fIj9zZ0Pflj6zj974pLK3yOIYGPI04v5TlMLGjql11Y";
 }
@@ -46,13 +57,6 @@ function getDbIncome() {
   });
 }
 
-function getDbCatAndTag() {
-  return new miniSheetDB2.init(getSSID(), "🐈‍⬛ Cat and Tag", {
-    col_length: 8,
-    row_start: 2,
-    json: true,
-  });
-}
 
 function getDbSettings() {
   return new miniSheetDB2.init(getSSID(), "⚙️Setting", {
