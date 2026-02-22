@@ -73,28 +73,35 @@ function deleteFromSheet(key) {
 //  SIDEBAR — dipanggil dari HTML
 // ═══════════════════════════════════════════════
 
-/** Simpan satu nilai config */
 function saveValue(key, value) {
-  saveToSheet(key, value);
+  if (key === 'TELEGRAM_ID' || key === 'DEPLOYMENT_ID') {
+    PropertiesService.getScriptProperties().setProperty(key, value);
+  } else {
+    saveToSheet(key, value);
+  }
 }
 
-/** Ambil satu nilai config */
 function getValue(key) {
+  if (key === 'TELEGRAM_ID' || key === 'DEPLOYMENT_ID') {
+    return PropertiesService.getScriptProperties().getProperty(key) || '';
+  }
   return getFromSheet(key);
 }
 
 /** Load semua config untuk sidebar Connection tab */
 function getBotAndDeploymentIds() {
+  const props = PropertiesService.getScriptProperties();
   return {
-    telegramId: getFromSheet('TELEGRAM_ID'),
-    deploymentId: getFromSheet('DEPLOYMENT_ID')
+    telegramId: props.getProperty('TELEGRAM_ID') || '',
+    deploymentId: props.getProperty('DEPLOYMENT_ID') || ''
   };
 }
 
 /** Cek status bot */
 function getBotStatus() {
-  var telegramId = getFromSheet('TELEGRAM_ID');
-  var deploymentId = getFromSheet('DEPLOYMENT_ID');
+  const props = PropertiesService.getScriptProperties();
+  var telegramId = props.getProperty('TELEGRAM_ID') || '';
+  var deploymentId = props.getProperty('DEPLOYMENT_ID') || '';
   if (!telegramId || !deploymentId) return 'Disconnected';
 
   try {
@@ -123,7 +130,7 @@ function setWebhook(telegramId, deploymentId) {
 
 /** Delete webhook */
 function deleteWebhook() {
-  var telegramId = getFromSheet('TELEGRAM_ID');
+  var telegramId = PropertiesService.getScriptProperties().getProperty('TELEGRAM_ID') || '';
   if (!telegramId) return '⚠️ Token tidak ditemukan.';
   var url = 'https://api.telegram.org/bot' + telegramId + '/deleteWebhook';
   try {

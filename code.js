@@ -1,7 +1,7 @@
 // Hapus semua inisialisasi top-level
 
 function doPost(e) {
-  var tokenBot = getFromSheet('TELEGRAM_ID') || "";
+  var tokenBot = PropertiesService.getScriptProperties().getProperty('TELEGRAM_ID') || "";
   Logger.log('Token: ' + tokenBot); // cek token terbaca
 
   var bot = new lumpia.init(tokenBot);

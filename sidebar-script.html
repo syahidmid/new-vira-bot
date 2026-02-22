@@ -43,11 +43,12 @@
     /* ══════════════════════════════
        CONNECTION
     ══════════════════════════════ */
+
     function connect() {
       var btn = document.getElementById('connectButton');
       var telegramId = document.getElementById('telegramId').value.trim();
       var deploymentId = document.getElementById('deploymentId').value.trim();
-
+      // Disconnect
       if (btn.dataset.state === 'connected') {
         btn.innerHTML = '<span class="spinner"></span>Memutuskan...';
         btn.disabled = true;
@@ -58,12 +59,14 @@
         return;
       }
 
+      // Validate
       if (!telegramId) { toast('⚠️ Masukkan Bot Token dulu'); return; }
       if (!deploymentId) { toast('⚠️ Masukkan Deployment ID dulu'); return; }
 
       btn.innerHTML = '<span class="spinner"></span>Menghubungkan...';
       btn.disabled = true;
 
+      // Simpan ke Properties lalu setWebhook
       google.script.run
         .withSuccessHandler(function () {
           google.script.run

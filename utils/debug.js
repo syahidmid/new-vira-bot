@@ -1,6 +1,6 @@
 function debugMode() {
     // Re-init bot di dalam fungsi, bukan top-level
-    var token = getFromSheet('TELEGRAM_ID');
+    var token = PropertiesService.getScriptProperties().getProperty('TELEGRAM_ID') || '';
     var botDebug = new lumpia.init(token);
 
     initWizardStage(botDebug);
