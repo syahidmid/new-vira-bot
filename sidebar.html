@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <?!= include('sidebar-style') ?>
+  <style>
+    /* ══════════════════════════════
+       AI TAB EXTRAS
+    ══════════════════════════════ */
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 12px 14px;
+    }
+
+    .provider-card {
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      background: transparent;
+      font-family: inherit;
+    }
+
+    .provider-card .p-icon {
+      font-size: 22px;
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+
+    .provider-card .p-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .provider-card.selected {
+      border-color: var(--accent);
+      background: #e8f1ff;
+    }
+
+    .provider-card.selected .p-name {
+      color: var(--accent);
+    }
+
+    .ai-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 11px;
+      border-radius: 99px;
+    }
+
+    .ai-status-badge.active {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .ai-status-badge.inactive {
+      background: var(--surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .ai-status-badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .ai-status-badge.active .dot {
+      animation: pulse 2s infinite;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Welcome Card -->
+  <div class="welcome-card">
+    <div class="welcome-badge">✨ Vira Bot</div>
+    <div class="welcome-title">Catat Keuangan<br>Lewat Telegram</div>
+    <div class="welcome-desc">Bot pencatat pengeluaran & pemasukan pribadi langsung dari chat Telegram kamu.</div>
+  </div>
+
+  <!-- Status -->
+  <div class="status-row">
+    <span class="status-label">Status Bot</span>
+    <div class="status-pill disconnected" id="statusPill">
+      <span class="dot"></span>
+      <span id="statusText">Offline</span>
+    </div>
+  </div>
+
+  <!-- Segmented Control -->
+  <div class="segmented">
+    <button class="seg-btn active" onclick="switchTab('connection',this)">Connection</button>
+    <button class="seg-btn" onclick="switchTab('users',this)">Users</button>
+    <button class="seg-btn" onclick="switchTab('ai',this)">AI</button>
+    <button class="seg-btn" onclick="switchTab('info',this)">Info</button>
+  </div>
+
+  <!-- ══════════════════════════════
+       TAB: Connection
+  ══════════════════════════════ -->
+  <div class="tab-panel active" id="tab-connection">
+
+    <div class="section">
+      <div class="section-header">Kredensial Bot</div>
+      <div class="list-card">
+        <div class="field-row">
+          <label class="field-label">Bot Token</label>
+          <div class="field-input-wrap">
+            <input type="password" id="telegramId" placeholder="Token dari @BotFather">
+            <button class="eye-btn" onclick="toggleVis('telegramId',this)">👁</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <label class="field-label">Deployment ID</label>
+          <div class="field-input-wrap">
+            <input type="password" id="deploymentId" placeholder="ID Google Apps Script">
+            <button class="eye-btn" onclick="toggleVis('deploymentId',this)">👁</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-full btn-primary" id="connectButton" onclick="connect()"
+      style="margin-bottom:20px">Hubungkan</button>
+
+    <div class="section">
+      <div class="section-header">Cara Mulai</div>
+      <div class="list-card">
+        <div class="info-step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            Buat bot via <b>@BotFather</b>, ketik <code>/newbot</code>.
+            <a href="https://core.telegram.org/bots#botfather" target="_blank" class="step-link">Panduan →</a>
+          </div>
+        </div>
+        <div class="info-step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            Di Apps Script, klik <b>Deploy → New Deployment → Web App</b>. Salin Deployment ID-nya.
+            <a href="https://developers.google.com/apps-script/guides/web" target="_blank" class="step-link">Panduan
+              →</a>
+          </div>
+        </div>
+        <div class="info-step">
+          <div class="step-num">3</div>
+          <div class="step-text">Paste token & Deployment ID di atas, lalu klik <b>Hubungkan</b>.</div>
+        </div>
+        <div class="info-step">
+          <div class="step-num">4</div>
+          <div class="step-text">Kirim <code>/start</code> ke bot kamu di Telegram. Bot akan membalas dengan <b>Chat
+              ID</b> kamu. Tambahkan ID tersebut di tab <b>Users</b>.</div>
+        </div>
+        <div class="info-step">
+          <div class="step-num">5</div>
+          <div class="step-text">Kirim <b>Hi!</b> — bot sudah siap digunakan! 🎉</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════
+       TAB: Users
+  ══════════════════════════════ -->
+  <div class="tab-panel" id="tab-users">
+    <div class="section">
+      <div class="section-header">User Terdaftar</div>
+      <div class="list-card">
+        <div id="userList"></div>
+        <div class="add-user-fields">
+          <div class="field-row" style="border-top: 0.5px solid var(--border)">
+            <label class="field-label">Nama <span
+                style="font-weight:400;color:var(--text-tertiary)">(opsional)</span></label>
+            <div class="field-input-wrap">
+              <input type="text" id="newUserName" placeholder="contoh: Syahid">
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="field-label">Chat ID</label>
+            <div class="field-input-wrap">
+              <input type="number" id="newUserChatId" placeholder="contoh: 925867562">
+            </div>
+          </div>
+          <div style="padding: 10px 14px">
+            <button class="btn-full btn-primary" onclick="addUser()" style="margin-top:0">Tambah User</button>
+          </div>
+        </div>
+      </div>
+      <div class="hint-row">💡 Chat ID bisa didapat via <b>@userinfobot</b> di Telegram.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       TAB: AI
+  ══════════════════════════════ -->
+  <div class="tab-panel" id="tab-ai">
+
+    <!-- Status AI -->
+    <div class="status-row">
+      <span class="status-label">Status AI</span>
+      <div class="ai-status-badge inactive" id="aiStatusBadge">
+        <span class="dot"></span>
+        <span id="aiStatusText">Tidak Aktif</span>
+      </div>
+    </div>
+
+    <!-- Provider -->
+    <div class="section">
+      <div class="section-header">Pilih Provider</div>
+      <div class="list-card">
+        <div class="provider-grid">
+          <button class="provider-card selected" onclick="selectProvider('gemini', this)">
+            <div class="p-icon">✦</div>
+            <div class="p-name">Gemini</div>
+          </button>
+          <button class="provider-card" onclick="selectProvider('openai', this)">
+            <div class="p-icon">⬡</div>
+            <div class="p-name">OpenAI</div>
+          </button>
+          <button class="provider-card" onclick="selectProvider('groq', this)">
+            <div class="p-icon">⚡</div>
+            <div class="p-name">Groq</div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Key & Model -->
+    <div class="section">
+      <div class="section-header">Konfigurasi</div>
+      <div class="list-card">
+        <div class="field-row">
+          <label class="field-label">API Key</label>
+          <div class="field-input-wrap">
+            <input type="password" id="aiApiKey" placeholder="Paste API key kamu di sini">
+            <button class="eye-btn" onclick="toggleVis('aiApiKey',this)">👁</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <label class="field-label">Model <span
+              style="font-weight:400;color:var(--text-tertiary)">(opsional)</span></label>
+          <div class="field-input-wrap">
+            <input type="text" id="aiModel" placeholder="contoh: gemini-2.0-flash">
+          </div>
+        </div>
+      </div>
+      <div class="hint-row">💡 AI memahami pesan naturalmu, seperti <b>"tadi makan siang 25rb"</b> jadi data keuangan
+        otomatis.</div>
+    </div>
+
+    <button class="btn-full btn-primary" id="aiSaveButton" onclick="saveAiConfig()" style="margin-bottom:20px">Simpan &
+      Aktifkan</button>
+
+    <!-- Cara Dapat API Key -->
+    <div class="section">
+      <div class="section-header">Cara Dapat API Key</div>
+      <div class="list-card">
+        <div class="info-step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            Buka platform AI pilihanmu — <a href="https://aistudio.google.com/apikey" target="_blank"
+              class="step-link">Google AI Studio</a>, <a href="https://platform.openai.com/api-keys" target="_blank"
+              class="step-link">OpenAI</a>, atau <a href="https://console.groq.com/keys" target="_blank"
+              class="step-link">Groq</a>.
+          </div>
+        </div>
+        <div class="info-step">
+          <div class="step-num">2</div>
+          <div class="step-text">Buat akun atau login, lalu generate <b>API Key</b> baru.</div>
+        </div>
+        <div class="info-step">
+          <div class="step-num">3</div>
+          <div class="step-text">Pilih provider, paste key di atas, tentukan model yang ingin digunakan.</div>
+        </div>
+        <div class="info-step">
+          <div class="step-num">4</div>
+          <div class="step-text">Klik <b>Simpan & Aktifkan</b> — AI siap membantu mencatatmu! ✦</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════
+       TAB: Info
+  ══════════════════════════════ -->
+  <div class="tab-panel" id="tab-info">
+    <div class="section">
+      <div class="section-header">Status</div>
+      <div class="list-card">
+        <div class="list-row">
+          <div class="row-icon blue">🤖</div>
+          <div>
+            <div style="font-size:15px" id="infoStatus">Belum terhubung</div>
+            <div style="font-size:12px; color:var(--text-secondary)" id="infoSubStatus">Hubungkan bot terlebih dahulu
+            </div>
+          </div>
+        </div>
+        <div class="list-row" id="aiStatusRow">
+          <div class="row-icon" id="aiIconWrap" style="background:#f2f2f7">✦</div>
+          <div>
+            <div style="font-size:15px" id="aiStatus">AI tidak aktif</div>
+            <div style="font-size:12px; color:var(--text-secondary)" id="aiSubStatus">Tambah API key di tab AI</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Made with <span class="heart">♥</span> Syahid
+  </div>
+
+  <div id="toast"></div>
+
+  <?!= include('sidebar-script') ?>
+
+  <script>
+    /* ══════════════════════════════
+       AI TAB
+    ══════════════════════════════ */
+
+    var selectedProvider = 'gemini';
+
+    function selectProvider(name, el) {
+      selectedProvider = name;
+      document.querySelectorAll('.provider-card').forEach(function (c) { c.classList.remove('selected'); });
+      el.classList.add('selected');
+
+      // Update placeholder model sesuai provider
+      var placeholders = {
+        gemini: 'contoh: gemini-2.0-flash',
+        openai: 'contoh: gpt-4o-mini',
+        groq: 'contoh: llama-3.3-70b-versatile'
+      };
+      document.getElementById('aiModel').placeholder = placeholders[name] || '';
+    }
+
+    function saveAiConfig() {
+      var apiKey = document.getElementById('aiApiKey').value.trim();
+      var model = document.getElementById('aiModel').value.trim();
+      var btn = document.getElementById('aiSaveButton');
+
+      if (!apiKey) { toast('⚠️ API Key tidak boleh kosong'); return; }
+
+      btn.innerHTML = '<span class="spinner"></span>Menyimpan...';
+      btn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(function (res) {
+          btn.disabled = false;
+          if (res.success) {
+            btn.innerHTML = 'Simpan & Aktifkan';
+            toast('✦ AI berhasil diaktifkan!');
+            checkAiStatus();
+          } else {
+            btn.innerHTML = 'Simpan & Aktifkan';
+            toast('❌ ' + res.message);
+          }
+        })
+        .withFailureHandler(function (e) {
+          btn.disabled = false;
+          btn.innerHTML = 'Simpan & Aktifkan';
+          toast('❌ ' + e.message);
+        })
+        .saveAiConfig(selectedProvider, apiKey, model);
+    }
+
+    function checkAiStatus() {
+      google.script.run.withSuccessHandler(function (res) {
+        var badge = document.getElementById('aiStatusBadge');
+        var txt = document.getElementById('aiStatusText');
+        var infoAi = document.getElementById('aiStatus');
+        var infoAiSub = document.getElementById('aiSubStatus');
+        var iconWrap = document.getElementById('aiIconWrap');
+
+        if (res && res.active) {
+          badge.className = 'ai-status-badge active';
+          txt.textContent = 'Aktif';
+          infoAi.textContent = '✦ AI aktif (' + res.provider + ')';
+          infoAiSub.textContent = res.model || 'Model default';
+          iconWrap.style.background = '#e8f8ed';
+
+          // Pre-fill form
+          if (res.provider) {
+            var cards = document.querySelectorAll('.provider-card');
+            cards.forEach(function (c) { c.classList.remove('selected'); });
+            var providerNames = { gemini: 0, openai: 1, groq: 2 };
+            var idx = providerNames[res.provider.toLowerCase()];
+            if (idx !== undefined) cards[idx].classList.add('selected');
+            selectedProvider = res.provider.toLowerCase();
+          }
+          if (res.model) document.getElementById('aiModel').value = res.model;
+        } else {
+          badge.className = 'ai-status-badge inactive';
+          txt.textContent = 'Tidak Aktif';
+          infoAi.textContent = 'AI tidak aktif';
+          infoAiSub.textContent = 'Tambah API key di tab AI';
+          iconWrap.style.background = '#f2f2f7';
+        }
+      }).getAiStatus();
+    }
+
+    // Extend window.onload
+    var _origOnload = window.onload;
+    window.onload = function () {
+      if (_origOnload) _origOnload();
+      checkAiStatus();
+    };
+  </script>
+
+</body>
+
+</html>

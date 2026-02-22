@@ -1,0 +1,197 @@
+<script>
+
+  /* ══════════════════════════════
+     UI HELPERS
+  ══════════════════════════════ */
+
+  function switchTab(id, el) {
+    document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+    document.querySelectorAll('.seg-btn').forEach(function (b) { b.classList.remove('active'); });
+    document.getElementById('tab-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function toggleVis(id, btn) {
+    var inp = document.getElementById(id);
+    if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+    else { inp.type = 'password'; btn.textContent = '👁'; }
+  }
+
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show';
+    setTimeout(function () { t.className = ''; }, 3000);
+  }
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+
+  /* ══════════════════════════════
+     CONNECTION
+  ══════════════════════════════ */
+
+  function connect() {
+    var btn = document.getElementById('connectButton');
+    var telegramId = document.getElementById('telegramId').value.trim();
+    var deploymentId = document.getElementById('deploymentId').value.trim();
+    var ownerChatId = document.getElementById('ownerChatId').value.trim();
+
+    // Disconnect
+    if (btn.dataset.state === 'connected') {
+      btn.innerHTML = '<span class="spinner"></span>Memutuskan...';
+      btn.disabled = true;
+      google.script.run
+        .withSuccessHandler(function (res) { toast(res); checkBotStatus(); })
+        .withFailureHandler(function (e) { toast('❌ ' + e.message); checkBotStatus(); })
+        .deleteWebhook();
+      return;
+    }
+
+    // Validate
+    if (!telegramId) { toast('⚠️ Masukkan Bot Token dulu'); return; }
+    if (!deploymentId) { toast('⚠️ Masukkan Deployment ID dulu'); return; }
+
+    btn.innerHTML = '<span class="spinner"></span>Menghubungkan...';
+    btn.disabled = true;
+
+    // Simpan ke _config sheet lalu setWebhook
+    google.script.run.withSuccessHandler(function () {
+      google.script.run.withSuccessHandler(function () {
+        google.script.run
+          .withSuccessHandler(function (res) {
+            toast(res);
+            // Auto-register owner if ID provided
+            if (ownerChatId) {
+              google.script.run
+                .withSuccessHandler(function (result) {
+                  if (result.success) { toast('👤 Owner terdaftar!'); loadUsers(); }
+                })
+                .addUser('Owner', ownerChatId);
+            }
+            checkBotStatus();
+          })
+          .withFailureHandler(function (e) { toast('❌ ' + e.message); checkBotStatus(); })
+          .setWebhook(telegramId, deploymentId);
+      }).saveValue('DEPLOYMENT_ID', deploymentId);
+    }).saveValue('TELEGRAM_ID', telegramId);
+  }
+
+  function checkBotStatus() {
+    google.script.run.withSuccessHandler(function (status) {
+      var pill = document.getElementById('statusPill');
+      var txtEl = document.getElementById('statusText');
+      var btn = document.getElementById('connectButton');
+      var infoSt = document.getElementById('infoStatus');
+
+      btn.disabled = false;
+
+      if (status === 'Connected') {
+        pill.className = 'status-pill connected';
+        txtEl.textContent = 'Online';
+        btn.className = 'btn-full btn-danger';
+        btn.innerHTML = 'Putuskan Koneksi';
+        btn.dataset.state = 'connected';
+        infoSt.textContent = '🟢 Bot aktif & berjalan';
+      } else {
+        pill.className = 'status-pill disconnected';
+        txtEl.textContent = 'Offline';
+        btn.className = 'btn-full btn-primary';
+        btn.innerHTML = 'Hubungkan';
+        btn.dataset.state = '';
+        infoSt.textContent = '🔴 Bot belum terhubung';
+      }
+    }).getBotStatus();
+  }
+
+  function loadStoredValues() {
+    google.script.run.withSuccessHandler(function (v) {
+      document.getElementById('telegramId').value = v.telegramId || '';
+      document.getElementById('deploymentId').value = v.deploymentId || '';
+      document.getElementById('ownerChatId').value = '';  // owner ID not stored
+    }).getBotAndDeploymentIds();
+  }
+
+
+  /* ══════════════════════════════
+     USERS
+  ══════════════════════════════ */
+
+  function renderUsers(users) {
+    var list = document.getElementById('userList');
+
+    if (!users || users.length === 0) {
+      list.innerHTML =
+        '<div class="empty-state">' +
+        '<div class="icon">👤</div>' +
+        '<div class="title">Belum ada user</div>' +
+        '<div class="sub">Tambah Chat ID di bawah</div>' +
+        '</div>';
+      return;
+    }
+
+    list.innerHTML = users.map(function (u) {
+      var initial = u.name ? u.name.charAt(0).toUpperCase() : '#';
+      var label = u.name || '—';
+      return (
+        '<div class="user-row">' +
+        '<div class="user-avatar">' + initial + '</div>' +
+        '<div class="user-info">' +
+        '<div class="user-name">' + esc(label) + '</div>' +
+        '<div class="user-chatid">' + esc(u.chatId) + '</div>' +
+        '</div>' +
+        '<button class="remove-btn" ' +
+        'onclick="removeUser(\'' + esc(u.chatId) + '\',\'' + esc(label) + '\')" ' +
+        'title="Hapus">✕</button>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function loadUsers() {
+    google.script.run.withSuccessHandler(renderUsers).getUsers();
+  }
+
+  function addUser() {
+    var name = document.getElementById('newUserName').value.trim();
+    var chatId = document.getElementById('newUserChatId').value.trim();
+
+    if (!chatId) { toast('⚠️ Chat ID tidak boleh kosong'); return; }
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        if (res.success) {
+          document.getElementById('newUserName').value = '';
+          document.getElementById('newUserChatId').value = '';
+          toast(res.message);
+          loadUsers();
+        } else {
+          toast(res.message);
+        }
+      })
+      .addUser(name, chatId);
+  }
+
+  function removeUser(chatId, name) {
+    if (!confirm('Hapus "' + name + '"?')) return;
+    google.script.run
+      .withSuccessHandler(function (res) { toast(res.message); loadUsers(); })
+      .removeUser(chatId);
+  }
+
+
+  /* ══════════════════════════════
+     INIT
+  ══════════════════════════════ */
+
+  window.onload = function () {
+    loadStoredValues();
+    checkBotStatus();
+    loadUsers();
+  };
+
+</script>
