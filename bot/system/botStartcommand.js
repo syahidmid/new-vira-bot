@@ -7,7 +7,7 @@ function handleStartCommand(ctx) {
 
     // Kalau sudah terdaftar → welcome normal
     if (isUserAllowed(chatId)) {
-        ctx.reply(
+        ctx.replyWithMarkdown(
             '👋 Halo, *' + nama + '*!\n\n' +
             'Selamat datang di *Vira Bot* 🤖\n' +
             'Bot pencatat pengeluaran & pemasukan pribadimu.\n\n' +
@@ -15,22 +15,26 @@ function handleStartCommand(ctx) {
             '/start — Tampilkan pesan ini\n' +
             '/bantuan — Panduan lengkap\n\n' +
             '_Bot siap digunakan!_',
-            { parse_mode: 'Markdown' }
+            {
+                reply_markup: {
+                    keyboard: KB_MAIN_MENU,
+                    resize_keyboard: true,
+                    one_time_keyboard: true,
+                }
+            }
         );
         return;
     }
 
     // Belum terdaftar → kasih tau Chat ID mereka
-    ctx.reply(
+    ctx.replyWithMarkdown(
         '👋 Halo, *' + nama + '*!\n\n' +
         '🔒 Kamu belum terdaftar di bot ini.\n\n' +
         'Berikan Chat ID berikut ke admin:\n' +
         '`' + chatId + '`\n\n' +
-        '_Admin akan menambahkanmu via panel pengaturan._',
-        { parse_mode: 'Markdown' }
+        '_Admin akan menambahkanmu via panel pengaturan._'
     );
 }
-
 /**
  * Handle /help command
  */

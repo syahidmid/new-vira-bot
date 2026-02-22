@@ -13,7 +13,7 @@ function handleHashtagDelete(ctx) {
     }
 
     const targetTransactionID = ctx.match[1];
-    const result = dbSpending.key(targetTransactionID);
+    const result = getDbTransactions().key(targetTransactionID);
 
     if (!result) {
         ctx.reply(`🚮 Data with Transaction ID ${targetTransactionID} was not found.`);
@@ -22,7 +22,7 @@ function handleHashtagDelete(ctx) {
 
     try {
         // ===== DEBUG: Log deletion target =====
-        const sheet = dbSpending.sheet;
+        const sheet = getDbTransactions().sheet;
         const ssId = sheet.getParent().getId();
         const sheetName = sheet.getName();
         const rowToDelete = result.row;
@@ -59,8 +59,12 @@ function handleHashtagDelete(ctx) {
         }
 
         // Verify transaction no longer exists
-        const verifyResult = dbSpending.key(targetTransactionID);
-        if (verifyResult) {
+        var verifyAfterDelete = null;
+        if (sheet.getLastRow() >= 2) {
+            verifyAfterDelete = getDbTransactions().key(targetTransactionID);
+        }
+
+        if (verifyAfterDelete) {
             Logger.log("❌ VERIFICATION FAILED: Transaction still exists after deletion");
             ctx.reply(`🚮 Transaction was not actually deleted.`);
             return;
