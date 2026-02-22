@@ -49,7 +49,12 @@ function debugTargetFunctionExample() {
     Logger.log(result);
 }
 
-
+function debugDb() {
+    const db = getDbTransactions();
+    Logger.log(db);
+    Logger.log(db.sheet);
+    Logger.log(db.last_row);
+}
 /**
  * DEBUG: findcatTransactionFromDbOnly
  * --------------------------------------------------

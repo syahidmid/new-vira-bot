@@ -1,3 +1,21 @@
+
+// Inisialisasi database menggunakan miniSheetDB2
+
+const SPREADSHEET_ID = "1693q7FHrn-V4ZQQZDGgtHmU9rjr5mpc46CQPiYV55MM";
+
+function getDbTransactions() {
+  return new miniSheetDB2.init(SPREADSHEET_ID, "Transactions", {
+    col_length: 9, // +1 kolom account
+    row_start: 2,
+    col_start: 1,
+    json: true,
+  });
+}
+
+
+
+
+// Legacy code, will be refactored later
 function getSSID() {
   return "1fIj9zZ0Pflj6zj974pLK3yOIYGPI04v5TlMLGjql11Y";
 }

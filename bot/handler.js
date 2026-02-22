@@ -237,18 +237,21 @@ function handleHashtagSpending(ctx) {
     }
 
     const { category, tag } = findcatTransaction(expenseName);
+    const account = "";
     const note = "";
 
-    const dbSpending = getDbSpending();
-    const newRow = dbSpending.last_row + 1;
-    const saveRecord = dbSpending.range(newRow, 2, 1, 7);
+    const dbTransactions = getDbTransactions();
+    const newRow = dbTransactions.last_row + 1;
+    const saveRecord = dbTransactions.range(newRow, 1, 1, 9);
     const recordValues = [
         transactionID,
         savedDate,
         expenseName,
+        "spending",
         category,
         amount,
         tag,
+        account,
         note,
     ];
 
