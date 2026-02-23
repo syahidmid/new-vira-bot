@@ -215,6 +215,7 @@ function addSpending(input, amount, options) {
  * @param {string} newCategory - Category name (must be validated)
  * @return {Object} {success: boolean, data?: {...}, message?: "error"}
  */
+
 function updateCategoryValidated(id, newCategory) {
   try {
     // Validate category
@@ -229,16 +230,16 @@ function updateCategoryValidated(id, newCategory) {
     }
 
     // Check if transaction exists
-    const record = dbSpending.key(id);
+    const record = getDbTransactions().key(id);
     if (!record) {
       return { success: false, message: `Transaction ${id} not found` };
     }
 
     // Perform update
     const rowIndex = record.row;
-    const currentData = dbSpending.range(rowIndex, 2, 1, 7).getValues()[0];
+    const currentData = getDbTransactions().range(rowIndex, 2, 1, 7).getValues()[0];
     currentData[3] = newCategory; // Index 3 is category column
-    dbSpending.range(rowIndex, 2, 1, 7).setValues([currentData]);
+    getDbTransactions().range(rowIndex, 2, 1, 7).setValues([currentData]);
 
     Logger.log(`✅ Updated category for ${id}: ${newCategory}`);
 
