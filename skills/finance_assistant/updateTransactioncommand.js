@@ -6,7 +6,6 @@
 
 function handleHashtagUpdate(ctx) {
     const chatID = ctx.from.id;
-
     if (!isUserAllowed(chatID)) {
         ctx.reply(MSG_REJECT);
         return;
@@ -14,26 +13,28 @@ function handleHashtagUpdate(ctx) {
 
     const id = ctx.match[1];
     const text = ctx.message.text;
-    let pesan = `🤖 Transaction with ID ${id} has been updated:\n\n`;
+    const transaction = getDbTransactions().key(id);
+    const expensesname = transaction.data[2];
 
     const flagPatterns = {
-        "-cat": { regex: /-cat "([^"]+)"/, fn: updateCategoryValidated },
-        "-tag": { regex: /-tag "([^"]+)"/, fn: updateTagValidated },
-        "-amount": { regex: /-amount "([^"]+)"/, fn: updateAmountValidated },
-        "-note": { regex: /-note "([^"]+)"/, fn: updateNoteValidated },
-        "-expensesname": { regex: /-expensesname "([^"]+)"/, fn: updateExpenseNameValidated }, // fix typo juga
+        "-cat": { regex: /-cat "([^"]+)"/, fn: updateCategoryValidated, label: "Kategori" },
+        "-tag": { regex: /-tag "([^"]+)"/, fn: updateTagValidated, label: "Tag" },
+        "-amount": { regex: /-amount "([^"]+)"/, fn: updateAmountValidated, label: "Nominal" },
+        "-note": { regex: /-note "([^"]+)"/, fn: updateNoteValidated, label: "Catatan" },
+        "-expensesname": { regex: /-expensesname "([^"]+)"/, fn: updateExpenseNameValidated, label: "Nama transaksi" },
     };
 
+    let pesan = '';
     let handled = false;
 
-    for (const [flag, { regex, fn }] of Object.entries(flagPatterns)) {
+    for (const [flag, { regex, fn, label }] of Object.entries(flagPatterns)) {
         if (text.includes(flag)) {
             const match = text.match(regex);
             if (!match) {
                 pesan = `⚠️ Format salah untuk flag \`${flag}\`.\nContoh: \`${flag} "nilai"\``;
             } else {
                 fn(id, match[1]);
-                pesan += printTransaction(id);
+                pesan = `✅ *${label}* untuk *${expensesname}* (ID: \`${id}\`) diperbarui menjadi: *${match[1]}*`;
             }
             handled = true;
             break;
@@ -41,7 +42,7 @@ function handleHashtagUpdate(ctx) {
     }
 
     if (!handled) {
-        pesan = `🤖 Invalid input. Please provide valid update commands.\n${MSG_UPDATE_COMMANDS}`;
+        pesan = `🤖 Input tidak valid. Mohon ulangi dengan format yang benar.\n${MSG_UPDATE_COMMANDS}`;
     }
 
     ctx.replyWithMarkdown(pesan);

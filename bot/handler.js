@@ -82,90 +82,55 @@
  * @param {Object} bot - lumpia bot instance
  */
 function setupMessageRouters(bot) {
-    // ===== SLASH COMMANDS (No AI needed) =====
-
-    // /start command
     bot.start(handleStartCommand); // Done refactor - moved logic to separate function in the same file
-
-    // Emergency exit command
     bot.command('exit', (ctx) => {
         ctx.scene.leave();
         ctx.reply('✅ Scene exited successfully!');
     });
 
+    // Wizard entry points
     bot.hears(/view\s*spending/i, (ctx) => {
         return stage.enter('view_spending');
     });
-
     bot.command('wizardtest', (ctx) => {
         return stage.enter('wizardTest');
     });
 
     // /help command
     bot.command('help', handleHelpCommand);
-
-    // /ping command (connection test)
     bot.command('ping', handlePingCommand);
-
-    // /whoiam command
     bot.command('whoiam', handleWhoIAmCommand);
-
-
-    // /quote command
     bot.command('quote', handleQuoteCommand);
-
-    // /update command (info about update syntax)
     bot.command('update', handleUpdateInfoCommand);
 
+
     // ===== HASHTAG SHORTCUTS (Direct execution, no AI) =====
-
-    // #Spending: Log expense with shortcut format
     bot.hears(/#Spending (.+) (\d+)/, handleHashtagSpending); // done refactor - moved logic to separate function in the same file
-
-    // #Income: Log income with shortcut format
     bot.hears(/#Income (.+) (\d+)/, handleHashtagIncome); // done refactor - moved logic to separate function in the same file
-
-    // #Delete: Delete transaction by ID
     bot.hears(/#Delete ([0-9A-Za-z]{4})/, handleHashtagDelete); // done refactor - moved logic to separate function in the same file
-
-    // #Update: Update transaction fields
-    bot.hears(/#Update (\w+)/, handleHashtagUpdate);
-
-    // #Transactions: List recent transactions
+    bot.hears(/Delete This|Last Transaction/i, handleDeleteLastTransaction);
+    bot.hears(/#Update (\w+)/, handleHashtagUpdate); // done refactor - moved logic to separate function in the same file, also updated regex to be more flexible for field names
     bot.hears(/#Transactions (\d+)/, handleHashtagTransactions);
 
 
     // ===== UI SHORTCUTS (Menu buttons, no AI) =====
-    // Menu button: Input Pemasukan (Income)
     bot.hears(/Add Income/i, handleMenuInputIncome);
-    // Menu button: Input Pengeluaran (Expense)
     bot.hears(/Add Spending/i, handleMenuInputExpense);
-
-
-    bot.hears("Show Bookmarks", handleMenuShowBookmarks);
-
-    // Menu button: Delete Last Transaction
-    bot.hears(/Delete This|Last Transaction/i, handleDeleteLastTransaction);
 
     // ===== SETTINGS MENU =====
     bot.hears(/^[^\w]*settings$/i, handleSettingsCommand);
     bot.hears(/Add Default Category/i, handleAddCategoryWizard);
 
-
-    // ===== URL BOOKMARKING (Direct execution, no AI) =====
-
-    // URLs: Save bookmarks
+    // Other Commands
+    bot.hears("Show Bookmarks", handleMenuShowBookmarks);
     bot.hears(/^https?:\/\/\S+/, handleURLBookmark);
 
     // ===== PHOTO MESSAGES (OCR processing - PHASE 2.5) =====
-    // Photo messages: Extract text via OCR
     bot.on("photo", handlePhotoMessageRouter);
 
     // ===== NATURAL LANGUAGE (AI-assisted) =====
-    // Catch-all for unmatched messages → Pass to AI router
     bot.hears(/^(?!\/).+/, handleNaturalLanguage);
 }
-
 
 
 
