@@ -6,7 +6,6 @@
 function handleHashtagDelete(ctx) {
     const chatID = ctx.from.id;
 
-    // Access control
     if (!isUserAllowed(chatID)) {
         ctx.reply(MSG_REJECT);
         return;
@@ -16,12 +15,13 @@ function handleHashtagDelete(ctx) {
     const result = getDbTransactions().key(targetTransactionID);
 
     if (!result) {
-        ctx.reply(`🚮 Data with Transaction ID ${targetTransactionID} was not found.`);
+        ctx.reply(`🚮 Transaksi dengan ID \`${targetTransactionID}\` tidak ditemukan.`);
         return;
     }
 
+    const expensesname = result.data[2];
+
     try {
-        // ===== DEBUG: Log deletion target =====
         const sheet = getDbTransactions().sheet;
         const ssId = sheet.getParent().getId();
         const sheetName = sheet.getName();
@@ -35,30 +35,24 @@ function handleHashtagDelete(ctx) {
         Logger.log("Last row: " + lastRow);
         Logger.log("Transaction ID: " + targetTransactionID);
 
-        // Validate row boundaries
         if (rowToDelete < 2 || rowToDelete > lastRow) {
             Logger.log("❌ VALIDATION FAILED: Row out of bounds");
-            ctx.reply(`🚮 Invalid row number. Cannot delete.`);
+            ctx.reply(`🚮 Baris tidak valid. Tidak dapat menghapus.`);
             return;
         }
 
-        // Delete from spreadsheet
         sheet.deleteRow(rowToDelete);
-
-        // CRITICAL: Flush changes to ensure deletion is persisted
         SpreadsheetApp.flush();
 
-        // Verify deletion was successful
         const verifyLastRow = sheet.getLastRow();
         Logger.log("Last row after deletion: " + verifyLastRow);
 
         if (verifyLastRow === lastRow) {
             Logger.log("⚠️ WARNING: Last row unchanged after deleteRow()");
-            ctx.reply(`🚮 Failed to delete transaction. Row may be protected.`);
+            ctx.reply(`🚮 Gagal menghapus *${expensesname}* (ID: \`${targetTransactionID}\`). Baris mungkin diproteksi.`);
             return;
         }
 
-        // Verify transaction no longer exists
         var verifyAfterDelete = null;
         if (sheet.getLastRow() >= 2) {
             verifyAfterDelete = getDbTransactions().key(targetTransactionID);
@@ -66,15 +60,59 @@ function handleHashtagDelete(ctx) {
 
         if (verifyAfterDelete) {
             Logger.log("❌ VERIFICATION FAILED: Transaction still exists after deletion");
-            ctx.reply(`🚮 Transaction was not actually deleted.`);
+            ctx.reply(`🚮 *${expensesname}* (ID: \`${targetTransactionID}\`) gagal dihapus.`);
             return;
         }
 
         Logger.log("✅ DELETION SUCCESSFUL: Transaction " + targetTransactionID);
-        ctx.reply(`🗑️ Data with Transaction ID ${targetTransactionID} has been successfully deleted.`);
+        ctx.replyWithMarkdown(`🗑️ Transaksi *${expensesname}* dengan ID \`${targetTransactionID}\` berhasil dihapus.`);
 
     } catch (error) {
         Logger.log("❌ ERROR in handleHashtagDelete: " + error.message);
-        ctx.reply(`🚮 Error deleting transaction: ${error.message}`);
+        ctx.reply(`🚮 Error menghapus transaksi: ${error.message}`);
+    }
+}
+
+/**
+ * Handle "Delete Last Transaction" button / natural language
+ * Validates user, fetches last transaction ID, injects into ctx.match, delegates to handleHashtagDelete
+ */
+function handleDeleteLastTransaction(ctx) {
+    const chatID = ctx.from.id;
+
+    // Access control
+    if (!isUserAllowed(chatID)) {
+        ctx.reply(MSG_REJECT);
+        return;
+    }
+
+    try {
+        const lastRow = getDbTransactions().last_row;
+
+        // Validate that there is at least one transaction
+        if (lastRow < 2) {
+            ctx.reply("🗑️ Tidak ada transaksi untuk dihapus.");
+            return;
+        }
+
+        // Fetch the transaction ID from the last row (column 1, index 0 in miniSheetDB2)
+        const lastRowData = getDbTransactions().range(lastRow, 1, 1, 1).getValues()[0];
+        const lastTransactionID = lastRowData[0];
+
+        // Validate transaction ID exists
+        if (!lastTransactionID || lastTransactionID.toString().trim() === "") {
+            ctx.reply("🗑️ Tidak dapat mengambil ID transaksi dari baris terakhir.");
+            return;
+        }
+
+        // Inject the transaction ID into ctx.match as expected by handleHashtagDelete
+        ctx.match = [null, lastTransactionID.toString().trim()];
+
+        // Delegate deletion to existing handler (no logic duplication)
+        handleHashtagDelete(ctx);
+
+    } catch (error) {
+        Logger.log("❌ ERROR in handleDeleteLastTransaction: " + error.message);
+        ctx.reply(`🗑️ Error deleting last transaction: ${error.message}`);
     }
 }

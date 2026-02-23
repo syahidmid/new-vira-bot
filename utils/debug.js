@@ -26,7 +26,8 @@ function debugMode() {
                 type: "private",
             },
             date: 1668514366,
-            text: "#Update bszy -tag \"Food and Drink\"",
+            text: "Delete last transaction",
+            // text: "#Update bszy -tag \"Food and Drink\"",
             entities: [{ offset: 0, length: 6, type: "bot_command" }],
         },
     };

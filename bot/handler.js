@@ -108,7 +108,7 @@ function setupMessageRouters(bot) {
     bot.hears(/#Spending (.+) (\d+)/, handleHashtagSpending); // done refactor - moved logic to separate function in the same file
     bot.hears(/#Income (.+) (\d+)/, handleHashtagIncome); // done refactor - moved logic to separate function in the same file
     bot.hears(/#Delete ([0-9A-Za-z]{4})/, handleHashtagDelete); // done refactor - moved logic to separate function in the same file
-    bot.hears(/Delete This|Last Transaction/i, handleDeleteLastTransaction);
+    bot.hears(/Delete This|Last Transaction/i, handleDeleteLastTransaction); // done refactor - moved logic to separate function in the same file, also updated regex to match both button text and natural language
     bot.hears(/#Update (\w+)/, handleHashtagUpdate); // done refactor - moved logic to separate function in the same file, also updated regex to be more flexible for field names
     bot.hears(/#Transactions (\d+)/, handleHashtagTransactions);
 
@@ -221,51 +221,6 @@ function handleMenuViewExpenses(ctx) {
     });
 }
 
-
-/**
- * Handle "Delete Last Transaction" button / natural language
- * Validates user, fetches last transaction ID, injects into ctx.match, delegates to handleHashtagDelete
- */
-function handleDeleteLastTransaction(ctx) {
-    const chatID = ctx.from.id;
-
-    // Access control
-    if (!isUserAllowed(chatID)) {
-        ctx.reply(MSG_REJECT);
-        return;
-    }
-
-    try {
-        // Get the last row in the spreadsheet
-        const lastRow = dbSpending.last_row;
-
-        // Validate that there is at least one transaction
-        if (lastRow < 2) {
-            ctx.reply("🗑️ No transactions to delete.");
-            return;
-        }
-
-        // Fetch the transaction ID from the last row (column 2, index 0 in miniSheetDB2)
-        const lastRowData = dbSpending.range(lastRow, 2, 1, 1).getValues()[0];
-        const lastTransactionID = lastRowData[0];
-
-        // Validate transaction ID exists
-        if (!lastTransactionID || lastTransactionID.toString().trim() === "") {
-            ctx.reply("🗑️ Could not retrieve transaction ID from last row.");
-            return;
-        }
-
-        // Inject the transaction ID into ctx.match as expected by handleHashtagDelete
-        ctx.match = [null, lastTransactionID.toString().trim()];
-
-        // Delegate deletion to existing handler (no logic duplication)
-        handleHashtagDelete(ctx);
-
-    } catch (error) {
-        Logger.log("❌ ERROR in handleDeleteLastTransaction: " + error.message);
-        ctx.reply(`🗑️ Error deleting last transaction: ${error.message}`);
-    }
-}
 
 /**
  * ===== PHOTO MESSAGE HANDLER (PHASE 2.5 - OCR) =====
