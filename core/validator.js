@@ -287,6 +287,39 @@ function validateNote(note) {
     };
 }
 
+function validateAccount(account) {
+    // If not provided, return empty string
+    if (!account) {
+        return {
+            valid: true,
+            data: ""
+        };
+    }
+
+    // Must be string
+    if (typeof account !== 'string') {
+        return {
+            valid: false,
+            message: "Account must be a string"
+        };
+    }
+
+    const trimmed = account.trim();
+
+    // Max length 100 characters
+    if (trimmed.length > 100) {
+        return {
+            valid: false,
+            message: "Account name too long (max 100 characters)"
+        };
+    }
+
+    return {
+        valid: true,
+        data: trimmed
+    };
+}
+
 /**
  * Master validation function for spending data
  * Validates all fields and returns fully sanitized data or error

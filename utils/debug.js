@@ -26,7 +26,7 @@ function debugMode() {
                 type: "private",
             },
             date: 1668514366,
-            text: "#Update bszy -cat \"Food and Drink\"",
+            text: "#Update bszy -tag \"Food and Drink\"",
             entities: [{ offset: 0, length: 6, type: "bot_command" }],
         },
     };
